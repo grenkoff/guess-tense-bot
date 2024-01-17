@@ -5,7 +5,7 @@ links_kb = InlineKeyboardMarkup(
     inline_keyboard=[
         [
             InlineKeyboardButton(text="Telegram", url="tg://resolve?domain=agrenkoff"),
-            InlineKeyboardButton(text="Github", url="https://github.com/grenkoff")
+            InlineKeyboardButton(text="Github", url="https://github.com/grenkoff/guess-tense-bot")
         ]
     ]
 )
