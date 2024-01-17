@@ -14,7 +14,7 @@ finish_or_next_kb = InlineKeyboardMarkup(
     inline_keyboard=[
         [
             InlineKeyboardButton(text="Finish", url="tg://resolve?domain=agrenkoff"),
-            InlineKeyboardButton(text="Next", url="https://github.com/grenkoff")
+            InlineKeyboardButton(text="Next", url="https://github.com/grenkoff/guess-tense-bot")
         ]
     ]
 )

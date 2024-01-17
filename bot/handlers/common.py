@@ -3,12 +3,12 @@ from random import choice
 from aiogram import F, Router
 from aiogram.filters import CommandStart, Command, StateFilter
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import StatesGroup, State, default_state
+from aiogram.fsm.state import default_state
 from aiogram.types import Message, ReplyKeyboardRemove
 from aiogram.methods.delete_message import DeleteMessage
 
 from bot_instance import bot
-# from data.sentences import sentences
+from utils.states import GuessRandom
 from data.data_fetcher import get_random
 from keyboards.reply import tenses_kb,finish_next_kb
 from keyboards.inline import finish_or_next_kb, links_kb
@@ -16,12 +16,6 @@ from welcome import WELCOME, HELP
 
 
 router = Router()
-
-
-class GuessRandom(StatesGroup):
-    guess_random = State()
-    finish_or_next = State()
-
 
 available_tenses = {
     "Pr Si": "Present Simple",

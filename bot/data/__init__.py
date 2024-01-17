@@ -1,1 +1,1 @@
-from . import sentences, data_fetcher
+from . import data_fetcher
