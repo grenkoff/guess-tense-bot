@@ -3,9 +3,11 @@ import logging
 
 from aiogram import Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.types import BotCommandScopeAllPrivateChats
 
 from bot_instance import bot
-from handlers import common#, guess_random
+from handlers import common  # , guess_random
+from common.bot_cmds_list import private
 
 
 async def main():
@@ -22,7 +24,9 @@ async def main():
     # dp.include_router(guess_random.router)
 
     await bot.delete_webhook(drop_pending_updates=True)
-    await dp.start_polling(bot)    
+    # await bot.delete_my_commands(scope=BotCommandScopeAllPrivateChats())
+    await bot.set_my_commands(commands=private, scope=BotCommandScopeAllPrivateChats())
+    await dp.start_polling(bot)
 
 
 if __name__ == "__main__":
