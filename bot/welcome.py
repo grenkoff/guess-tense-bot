@@ -1,5 +1,5 @@
 HELP = f'''
-🕹 <b>Keyboard`s buttons:</b>
+🕹 <b>Legends:</b>
 Pr = Present
 Pa = Past
 Fu = Future
