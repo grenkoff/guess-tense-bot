@@ -5,7 +5,13 @@ from aiogram.types import Message, CallbackQuery, ReplyKeyboardRemove
 
 from utils.states import GuessRandom
 from data.data_fetcher import get_random
-from keyboards.inline import tenses_inline_kb, finish_or_next_kb, links_kb
+from keyboards.inline import (
+    tenses_inline_kb,
+    finish_or_next_kb,
+    links_kb,
+    finish_kb,
+    guess_kb
+)
 from welcome import WELCOME, HELP
 
 
@@ -33,7 +39,7 @@ async def cmd_start_no_state(message: Message, bot: Bot):
     await bot.send_message(
         chat_id=message.from_user.id,
         text=f"Hi, <b>{message.from_user.first_name}</b>! 🤝\n{WELCOME}",
-        reply_markup=ReplyKeyboardRemove(),
+        reply_markup=guess_kb,
     )
 
 
@@ -128,7 +134,70 @@ async def cmd_finish_finish_or_next_state(
     )
     await callback.message.answer(
         text="The game is over 🏁\nSee you later 🖐\n\nOr use the /guess command to start the game again. ", # должно быть сообщение о счете: Your Score is 18/20 or 90% correct answers.
-        reply_markup=ReplyKeyboardRemove(),
+        reply_markup=finish_kb,
+    )
+    await callback.answer()
+
+
+@router.callback_query(F.data == "guess_again")
+async def cmd_guess_again_no_state(callback: CallbackQuery, state: FSMContext, bot: Bot):
+    await bot.edit_message_reply_markup(
+        chat_id=callback.from_user.id,
+        message_id=callback.message.message_id,
+        reply_markup=None,
+    )
+    global random_sentence
+    random_sentence = await get_random()
+    data = await state.get_data()
+    data["answer"] = random_sentence.get("tense")
+    data["sentence"] = random_sentence.get("sentence")
+    await state.set_data(data)
+    await callback.message.answer(
+        text="Guess the tense 👇",
+    )
+    await callback.message.answer(
+        text=f"💬 <b>{html.quote(random_sentence['sentence'])}</b>",
+        reply_markup=tenses_inline_kb.as_markup(),
+    )
+    await state.set_state(GuessRandom.guess_random)
+    await callback.answer()
+
+
+@router.callback_query(F.data == "guess")
+async def cmd_guess_callback_no_state(callback: CallbackQuery, state: FSMContext, bot: Bot):
+    await bot.edit_message_reply_markup(
+        chat_id=callback.from_user.id,
+        message_id=callback.message.message_id,
+        reply_markup=None,
+    )
+    global random_sentence
+    random_sentence = await get_random()
+    data = await state.get_data()
+    data["answer"] = random_sentence.get("tense")
+    data["sentence"] = random_sentence.get("sentence")
+    await state.set_data(data)
+    await callback.message.answer(
+        text="Guess the tense 👇",
+    )
+    await callback.message.answer(
+        text=f"💬 <b>{html.quote(random_sentence['sentence'])}</b>",
+        reply_markup=tenses_inline_kb.as_markup(),
+    )
+    await state.set_state(GuessRandom.guess_random)
+    await callback.answer()
+
+
+@router.callback_query(F.data == "credits")
+async def cmd_credits_no_state(callback: CallbackQuery, bot: Bot):
+    # await state.clear()
+    await bot.edit_message_reply_markup(
+        chat_id=callback.from_user.id,
+        message_id=callback.message.message_id,
+        reply_markup=None,
+    )
+    await callback.message.answer(
+        text=f"This bot was created by me 🙋‍♂️\n\nThere are my 🔗 links:",
+        reply_markup=links_kb,
     )
     await callback.answer()
 

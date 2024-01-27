@@ -1,4 +1,5 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types.web_app_info import WebAppInfo
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 
@@ -11,29 +12,19 @@ links_kb = InlineKeyboardMarkup(
         [
             InlineKeyboardButton(
                 text="Buy me a coffee ☕",
-                url="https://www.buymeacoffee.com/grenkoff"
+                web_app=WebAppInfo(url="https://www.buymeacoffee.com/grenkoff")
             )
         ]
     ]
 )
 
-# finish_or_next_kb = InlineKeyboardMarkup(
-#     inline_keyboard=[
-#         [
-#             InlineKeyboardButton(text="Finish", url="tg://resolve?domain=agrenkoff"),
-#             InlineKeyboardButton(text="Next", url="https://github.com/grenkoff/guess-tense-bot")
-#         ]
-#     ]
-# )
-
-
 finish_or_next_kb = InlineKeyboardBuilder()
 finish_b = InlineKeyboardButton(
-    text="Finish",
+    text="Finish 🏁",
     callback_data="finish"
 )
 next_b = InlineKeyboardButton(
-    text="Next",
+    text="Next 👉",
     callback_data="next"
 )
 finish_or_next_kb.row(finish_b, next_b)
@@ -55,3 +46,21 @@ fu_pe_co = InlineKeyboardButton(text="Fu Pe Co", callback_data="Fu Pe Co")
 tenses_inline_kb.row(pr_si, pr_co, pr_pe, pr_pe_co)\
                 .row(pa_si, pa_co, pa_pe, pa_pe_co)\
                 .row(fu_si, fu_co, fu_pe, fu_pe_co)
+
+
+finish_kb = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [
+            InlineKeyboardButton(text="Guess again", callback_data="guess_again"),
+            InlineKeyboardButton(text="Credits 🙎‍♂️", callback_data="credits")
+        ]
+    ]
+)
+
+guess_kb = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [
+            InlineKeyboardButton(text="Guess the tense 👉", callback_data="guess")
+        ]
+    ]
+)
