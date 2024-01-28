@@ -1,3 +1,4 @@
+from random import choice
 from asyncio import sleep
 
 from aiogram import F, Router, Bot, html
@@ -8,7 +9,8 @@ from aiogram.types import Message, CallbackQuery
 from utils.states import GuessRandom
 from data.data_fetcher import get_random
 from keyboards.inline import tenses_kb, finish_next_kb, links_kb, finish_kb, guess_kb
-from text import WELCOME, HELP, GUESS, FINISH, LINKS, UNKNOWN
+from common.text import WELCOME, HELP, GUESS, FINISH, LINKS, UNKNOWN
+from common.stickers import sticker_ids
 
 
 router = Router()
@@ -129,7 +131,7 @@ async def cmd_finish_finish_or_next_state(
     )
     sticker = await bot.send_sticker(
         chat_id=callback.from_user.id,
-        sticker="CAACAgIAAxkBAAELQ1VltkedFd4fWcALEXmfiiyLKNutIwACAQEAAladvQoivp8OuMLmNDQE",
+        sticker=choice(sticker_ids),
     )
     await sleep(1)
     await callback.message.answer(

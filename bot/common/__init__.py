@@ -1,1 +1,1 @@
-from . import bot_cmds_list
+from . import bot_cmds_list, text, stickers
