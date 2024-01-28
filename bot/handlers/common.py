@@ -138,6 +138,7 @@ async def cmd_finish_finish_or_next_state(
         chat_id=callback.from_user.id,
         sticker='CAACAgIAAxkBAAELQ1VltkedFd4fWcALEXmfiiyLKNutIwACAQEAAladvQoivp8OuMLmNDQE'
     )
+    await sleep(1)
     await callback.message.answer(
         text="The game is over 🏁\nSee you later 🖐\n\nOr use the /guess command to start the game again. ", # должно быть сообщение о счете: Your Score is 18/20 or 90% correct answers.
         reply_markup=finish_kb,
