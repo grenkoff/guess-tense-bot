@@ -3,18 +3,12 @@ from asyncio import sleep
 from aiogram import F, Router, Bot, html
 from aiogram.filters import CommandStart, Command, StateFilter
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, CallbackQuery, ReplyKeyboardRemove
+from aiogram.types import Message, CallbackQuery
 
 from utils.states import GuessRandom
 from data.data_fetcher import get_random
-from keyboards.inline import (
-    tenses_inline_kb,
-    finish_or_next_kb,
-    links_kb,
-    finish_kb,
-    guess_kb
-)
-from welcome import WELCOME, HELP
+from keyboards.inline import tenses_kb, finish_next_kb, links_kb, finish_kb, guess_kb
+from text import WELCOME, HELP, GUESS, FINISH, LINKS, UNKNOWN
 
 
 router = Router()
@@ -46,17 +40,17 @@ async def cmd_start_no_state(message: Message, bot: Bot):
 
 
 @router.message(StateFilter(None), Command("help"))
-async def cmd_help(message: Message, bot: Bot):
+async def cmd_help_no_state(message: Message, bot: Bot):
     await message.delete()
-    await bot.send_message(chat_id=message.from_user.id, text=f"{HELP}")
+    await bot.send_message(chat_id=message.from_user.id, text=HELP)
 
 
 @router.message(StateFilter(None), Command("author"))
-async def cmd_author(message: Message, bot: Bot):
+async def cmd_author_no_state(message: Message, bot: Bot):
     await message.delete()
     await bot.send_message(
         chat_id=message.from_user.id,
-        text=f"This bot was created by me 🙋‍♂️\n\nThere are my 🔗 links:",
+        text=LINKS,
         reply_markup=links_kb,
     )
 
@@ -72,29 +66,28 @@ async def cmd_guess_no_state(message: Message, state: FSMContext, bot: Bot):
     await state.set_data(data)
     await bot.send_message(
         chat_id=message.from_user.id,
-        text="Guess the tense 👇",
+        text=GUESS,
     )
     await bot.send_message(
         chat_id=message.from_user.id,
         text=f"💬 <b>{html.quote(random_sentence['sentence'])}</b>",
-        reply_markup=tenses_inline_kb.as_markup(),
+        reply_markup=tenses_kb.as_markup(),
     )
     await state.set_state(GuessRandom.guess_random)
 
 
-@router.message(StateFilter("GuessRandom.guess_random"), Command("guess"))
-async def cmd_guess_guess_random_state(message: Message):
-    await message.delete()
-
-
-@router.message(StateFilter("GuessRandom.finish_or_next"), Command("guess"))
-async def cmd_guess_finish_or_next_state(message: Message):
-    await message.delete()
-
-
 @router.message()
-async def delete_all_messages(message: Message):
+async def delete_all_messages(message: Message, bot: Bot):
     await message.delete()
+    msg = await bot.send_message(
+        chat_id=message.from_user.id,
+        text=UNKNOWN,
+    )
+    await sleep(3)
+    await bot.delete_message(
+        chat_id=message.from_user.id,
+        message_id=msg.message_id,
+    )
 
 
 @router.callback_query(F.data.in_(available_tenses))
@@ -110,17 +103,17 @@ async def tense_chosen(callback: CallbackQuery, state: FSMContext, bot: Bot):
             text=f"💬 <b>{html.quote(random_sentence['sentence'])}</b>\n\n✅ <b>{available_tenses[callback.data]}</b>\nAnd it`s correct!",
             chat_id=callback.from_user.id,
             message_id=callback.message.message_id,
-            reply_markup=finish_or_next_kb.as_markup(),
+            reply_markup=finish_next_kb.as_markup(),
         )
     else:
         await bot.edit_message_text(
             text=f"💬 <b>{html.quote(random_sentence['sentence'])}</b>\n\n🔴 <b>{available_tenses[callback.data]}</b>\nRight answer is <b>{available_tenses[random_sentence['tense']]}</b>",
             chat_id=callback.from_user.id,
             message_id=callback.message.message_id,
-            reply_markup=finish_or_next_kb.as_markup(),
+            reply_markup=finish_next_kb.as_markup(),
         )
 
-    await state.set_state(GuessRandom.finish_or_next)
+    await state.set_state(GuessRandom.finish_next)
     await callback.answer()
 
 
@@ -136,11 +129,11 @@ async def cmd_finish_finish_or_next_state(
     )
     sticker = await bot.send_sticker(
         chat_id=callback.from_user.id,
-        sticker='CAACAgIAAxkBAAELQ1VltkedFd4fWcALEXmfiiyLKNutIwACAQEAAladvQoivp8OuMLmNDQE'
+        sticker="CAACAgIAAxkBAAELQ1VltkedFd4fWcALEXmfiiyLKNutIwACAQEAAladvQoivp8OuMLmNDQE",
     )
     await sleep(1)
     await callback.message.answer(
-        text="The game is over 🏁\nSee you later 🖐\n\nOr use the /guess command to start the game again. ", # должно быть сообщение о счете: Your Score is 18/20 or 90% correct answers.
+        text=FINISH,
         reply_markup=finish_kb,
     )
     await sleep(5)
@@ -153,7 +146,9 @@ async def cmd_finish_finish_or_next_state(
 
 
 @router.callback_query(F.data == "guess_again")
-async def cmd_guess_again_no_state(callback: CallbackQuery, state: FSMContext, bot: Bot):
+async def cmd_guess_again_no_state(
+    callback: CallbackQuery, state: FSMContext, bot: Bot
+):
     await bot.edit_message_reply_markup(
         chat_id=callback.from_user.id,
         message_id=callback.message.message_id,
@@ -170,14 +165,16 @@ async def cmd_guess_again_no_state(callback: CallbackQuery, state: FSMContext, b
     )
     await callback.message.answer(
         text=f"💬 <b>{html.quote(random_sentence['sentence'])}</b>",
-        reply_markup=tenses_inline_kb.as_markup(),
+        reply_markup=tenses_kb.as_markup(),
     )
     await state.set_state(GuessRandom.guess_random)
     await callback.answer()
 
 
 @router.callback_query(F.data == "guess")
-async def cmd_guess_callback_no_state(callback: CallbackQuery, state: FSMContext, bot: Bot):
+async def cmd_guess_callback_no_state(
+    callback: CallbackQuery, state: FSMContext, bot: Bot
+):
     await bot.edit_message_reply_markup(
         chat_id=callback.from_user.id,
         message_id=callback.message.message_id,
@@ -190,11 +187,11 @@ async def cmd_guess_callback_no_state(callback: CallbackQuery, state: FSMContext
     data["sentence"] = random_sentence.get("sentence")
     await state.set_data(data)
     await callback.message.answer(
-        text="Guess the tense 👇",
+        text=GUESS,
     )
     await callback.message.answer(
         text=f"💬 <b>{html.quote(random_sentence['sentence'])}</b>",
-        reply_markup=tenses_inline_kb.as_markup(),
+        reply_markup=tenses_kb.as_markup(),
     )
     await state.set_state(GuessRandom.guess_random)
     await callback.answer()
@@ -209,7 +206,7 @@ async def cmd_credits_no_state(callback: CallbackQuery, bot: Bot):
         reply_markup=None,
     )
     await callback.message.answer(
-        text=f"This bot was created by me 🙋‍♂️\n\nThere are my 🔗 links:",
+        text=LINKS,
         reply_markup=links_kb,
     )
     await callback.answer()
@@ -232,6 +229,6 @@ async def cmd_next_finish_or_next_state(
     await state.set_data(data)
     await callback.message.answer(
         text=f"💬 <b>{html.quote(random_sentence['sentence'])}</b>",
-        reply_markup=tenses_inline_kb.as_markup(),
+        reply_markup=tenses_kb.as_markup(),
     )
     await state.set_state(GuessRandom.guess_random)

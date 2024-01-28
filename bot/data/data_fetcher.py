@@ -1,7 +1,7 @@
 import aiohttp
 
 # убрать эту переменную в .env
-SENTENCES_API_URL_RANDOM='http://127.0.0.1:8000/random'
+SENTENCES_API_URL_RANDOM = "http://127.0.0.1:8000/random"
 
 
 async def get_random():
