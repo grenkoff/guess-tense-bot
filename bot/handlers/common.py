@@ -1,3 +1,5 @@
+from asyncio import sleep
+
 from aiogram import F, Router, Bot, html
 from aiogram.filters import CommandStart, Command, StateFilter
 from aiogram.fsm.context import FSMContext
@@ -132,10 +134,20 @@ async def cmd_finish_finish_or_next_state(
         message_id=callback.message.message_id,
         reply_markup=None,
     )
+    sticker = await bot.send_sticker(
+        chat_id=callback.from_user.id,
+        sticker='CAACAgIAAxkBAAELQ1VltkedFd4fWcALEXmfiiyLKNutIwACAQEAAladvQoivp8OuMLmNDQE'
+    )
     await callback.message.answer(
         text="The game is over 🏁\nSee you later 🖐\n\nOr use the /guess command to start the game again. ", # должно быть сообщение о счете: Your Score is 18/20 or 90% correct answers.
         reply_markup=finish_kb,
     )
+    await sleep(5)
+    await bot.delete_message(
+        chat_id=callback.from_user.id,
+        message_id=sticker.message_id,
+    )
+
     await callback.answer()
 
 
