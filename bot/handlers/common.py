@@ -8,8 +8,13 @@ from aiogram.types import Message, CallbackQuery
 
 from utils.states import GuessRandom
 from data.data_fetcher import get_random
-from keyboards.inline import tenses_kb, finish_next_kb, links_kb, finish_kb, guess_kb
-from common.text import WELCOME, HELP, GUESS, FINISH, LINKS, UNKNOWN
+from keyboards.inline import (
+    tenses_kb, finish_next_kb, links_kb, finish_kb, guess_kb
+)
+from common.text import (
+    WELCOME, HELP, GUESS, FINISH, LINKS,
+    UNKNOWN, GUESS_F, CHOOSE_FN, CHOOSE_GUESS
+)
 from common.stickers import sticker_ids
 
 
@@ -41,13 +46,41 @@ async def cmd_start_no_state(message: Message, bot: Bot):
     )
 
 
-@router.message(StateFilter(None), Command("help"))
+@router.message(StateFilter(GuessRandom.guess_random), CommandStart())
+async def cmd_start_guess_random_state(message: Message, bot: Bot):
+    await message.delete()
+    msg = await bot.send_message(
+        chat_id=message.from_user.id,
+        text=GUESS_F,
+    )
+    await sleep(2)
+    await bot.delete_message(
+        chat_id=message.from_user.id,
+        message_id=msg.message_id,
+    )
+
+
+@router.message(StateFilter(GuessRandom.finish_next), CommandStart())
+async def cmd_start_guess_random_state(message: Message, bot: Bot):
+    await message.delete()
+    msg = await bot.send_message(
+        chat_id=message.from_user.id,
+        text=CHOOSE_FN,
+    )
+    await sleep(2)
+    await bot.delete_message(
+        chat_id=message.from_user.id,
+        message_id=msg.message_id,
+    )
+
+
+@router.message(Command("help"))
 async def cmd_help_no_state(message: Message, bot: Bot):
     await message.delete()
     await bot.send_message(chat_id=message.from_user.id, text=HELP)
 
 
-@router.message(StateFilter(None), Command("author"))
+@router.message(Command("author"))
 async def cmd_author_no_state(message: Message, bot: Bot):
     await message.delete()
     await bot.send_message(
@@ -78,22 +111,54 @@ async def cmd_guess_no_state(message: Message, state: FSMContext, bot: Bot):
     await state.set_state(GuessRandom.guess_random)
 
 
-@router.message()
-async def delete_all_messages(message: Message, bot: Bot):
+@router.message(StateFilter(GuessRandom.guess_random), Command("guess"))
+async def cmd_guess_no_state(message: Message, bot: Bot):
     await message.delete()
     msg = await bot.send_message(
         chat_id=message.from_user.id,
-        text=UNKNOWN,
+        text=GUESS_F,
     )
-    await sleep(3)
+    await sleep(2)
     await bot.delete_message(
         chat_id=message.from_user.id,
         message_id=msg.message_id,
     )
 
 
-@router.callback_query(F.data.in_(available_tenses))
-async def tense_chosen(callback: CallbackQuery, state: FSMContext, bot: Bot):
+@router.message(StateFilter(GuessRandom.finish_next), Command("guess"))
+async def cmd_guess_no_state(message: Message, bot: Bot):
+    await message.delete()
+    msg = await bot.send_message(
+        chat_id=message.from_user.id,
+        text=CHOOSE_FN,
+    )
+    await sleep(2)
+    await bot.delete_message(
+        chat_id=message.from_user.id,
+        message_id=msg.message_id,
+    )
+
+
+@router.callback_query(StateFilter(None), F.data.in_(available_tenses))
+async def tense_chosen_(callback: CallbackQuery, bot: Bot):
+    await bot.edit_message_reply_markup(
+        chat_id=callback.from_user.id,
+        message_id=callback.message.message_id,
+        reply_markup=None,
+    )
+    msg = await callback.message.answer(
+        text=CHOOSE_GUESS,
+    )
+    await sleep(3)
+    await bot.delete_message(
+        chat_id=callback.from_user.id,
+        message_id=msg.message_id,
+    )
+    await callback.answer()
+
+
+@router.callback_query(StateFilter(GuessRandom.guess_random), F.data.in_(available_tenses))
+async def tense_chosen_(callback: CallbackQuery, state: FSMContext, bot: Bot):
     await state.update_data(chosen_tense=callback.data.lower())
     await bot.edit_message_reply_markup(
         chat_id=callback.from_user.id,
@@ -119,7 +184,65 @@ async def tense_chosen(callback: CallbackQuery, state: FSMContext, bot: Bot):
     await callback.answer()
 
 
-@router.callback_query(F.data == "finish")
+@router.callback_query(StateFilter(GuessRandom.finish_next), F.data.in_(available_tenses))
+async def tense_chosen_(callback: CallbackQuery, bot: Bot):
+    await bot.edit_message_reply_markup(
+        chat_id=callback.from_user.id,
+        message_id=callback.message.message_id,
+        reply_markup=None,
+    )
+    msg = await callback.message.answer(
+        text=CHOOSE_FN,
+    )
+    await sleep(3)
+    await bot.delete_message(
+        chat_id=callback.from_user.id,
+        message_id=msg.message_id,
+    )
+    await callback.answer()
+
+
+@router.callback_query(StateFilter(None), F.data == "finish")
+async def cmd_finish_finish_or_next_state(
+    callback: CallbackQuery, bot: Bot
+):
+    await bot.edit_message_reply_markup(
+        chat_id=callback.from_user.id,
+        message_id=callback.message.message_id,
+        reply_markup=None,
+    )
+    msg = await callback.message.answer(
+        text=CHOOSE_GUESS,
+    )
+    await sleep(3)
+    await bot.delete_message(
+        chat_id=callback.from_user.id,
+        message_id=msg.message_id,
+    )
+    await callback.answer()
+
+
+@router.callback_query(StateFilter(GuessRandom.guess_random), F.data == "finish")
+async def cmd_finish_finish_or_next_state(
+    callback: CallbackQuery, bot: Bot
+):
+    await bot.edit_message_reply_markup(
+        chat_id=callback.from_user.id,
+        message_id=callback.message.message_id,
+        reply_markup=None,
+    )
+    msg = await callback.message.answer(
+        text=GUESS_F,
+    )
+    await sleep(3)
+    await bot.delete_message(
+        chat_id=callback.from_user.id,
+        message_id=msg.message_id,
+    )
+    await callback.answer()
+
+
+@router.callback_query(StateFilter(GuessRandom.finish_next), F.data == "finish")
 async def cmd_finish_finish_or_next_state(
     callback: CallbackQuery, state: FSMContext, bot: Bot
 ):
@@ -143,39 +266,15 @@ async def cmd_finish_finish_or_next_state(
         chat_id=callback.from_user.id,
         message_id=sticker.message_id,
     )
-
     await callback.answer()
 
 
-@router.callback_query(F.data == "guess_again")
-async def cmd_guess_again_no_state(
-    callback: CallbackQuery, state: FSMContext, bot: Bot
-):
-    await bot.edit_message_reply_markup(
-        chat_id=callback.from_user.id,
-        message_id=callback.message.message_id,
-        reply_markup=None,
-    )
-    global random_sentence
-    random_sentence = await get_random()
-    data = await state.get_data()
-    data["answer"] = random_sentence.get("tense")
-    data["sentence"] = random_sentence.get("sentence")
-    await state.set_data(data)
-    await callback.message.answer(
-        text="Guess the tense 👇",
-    )
-    await callback.message.answer(
-        text=f"💬 <b>{html.quote(random_sentence['sentence'])}</b>",
-        reply_markup=tenses_kb.as_markup(),
-    )
-    await state.set_state(GuessRandom.guess_random)
-    await callback.answer()
-
-
-@router.callback_query(F.data == "guess")
+@router.callback_query(StateFilter(None), F.data == "guess")
+@router.callback_query(StateFilter(None), F.data == "guess_again")
 async def cmd_guess_callback_no_state(
-    callback: CallbackQuery, state: FSMContext, bot: Bot
+    callback: CallbackQuery,
+    state: FSMContext,
+    bot: Bot
 ):
     await bot.edit_message_reply_markup(
         chat_id=callback.from_user.id,
@@ -199,9 +298,50 @@ async def cmd_guess_callback_no_state(
     await callback.answer()
 
 
+@router.callback_query(StateFilter(GuessRandom.guess_random), F.data == "guess")
+@router.callback_query(StateFilter(GuessRandom.guess_random), F.data == "guess_again")
+async def cmd_guess_callback_guess_random_state(
+    callback: CallbackQuery, bot: Bot
+):
+    await bot.edit_message_reply_markup(
+        chat_id=callback.from_user.id,
+        message_id=callback.message.message_id,
+        reply_markup=None,
+    )
+    msg = await callback.message.answer(
+        text=GUESS_F,
+    )
+    await sleep(3)
+    await bot.delete_message(
+        chat_id=callback.from_user.id,
+        message_id=msg.message_id,
+    )
+    await callback.answer()
+
+
+@router.callback_query(StateFilter(GuessRandom.finish_next), F.data == "guess")
+@router.callback_query(StateFilter(GuessRandom.finish_next), F.data == "guess_again")
+async def cmd_guess_callback_finish_next_state(
+    callback: CallbackQuery, bot: Bot
+):
+    await bot.edit_message_reply_markup(
+        chat_id=callback.from_user.id,
+        message_id=callback.message.message_id,
+        reply_markup=None,
+    )
+    msg = await callback.message.answer(
+        text=CHOOSE_FN,
+    )
+    await sleep(3)
+    await bot.delete_message(
+        chat_id=callback.from_user.id,
+        message_id=msg.message_id,
+    )
+    await callback.answer()
+
+
 @router.callback_query(F.data == "credits")
 async def cmd_credits_no_state(callback: CallbackQuery, bot: Bot):
-    # await state.clear()
     await bot.edit_message_reply_markup(
         chat_id=callback.from_user.id,
         message_id=callback.message.message_id,
@@ -214,8 +354,44 @@ async def cmd_credits_no_state(callback: CallbackQuery, bot: Bot):
     await callback.answer()
 
 
-@router.callback_query(F.data == "next")
-async def cmd_next_finish_or_next_state(
+@router.callback_query(StateFilter(None), F.data == "next")
+async def cmd_next_guess_random_state(callback: CallbackQuery, bot: Bot):
+    await bot.edit_message_reply_markup(
+        chat_id=callback.from_user.id,
+        message_id=callback.message.message_id,
+        reply_markup=None,
+    )
+    msg = await callback.message.answer(
+        text=CHOOSE_GUESS,
+    )
+    await sleep(3)
+    await bot.delete_message(
+        chat_id=callback.from_user.id,
+        message_id=msg.message_id,
+    )
+    await callback.answer()
+
+
+@router.callback_query(StateFilter(GuessRandom.guess_random), F.data == "next")
+async def cmd_next_guess_random_state(callback: CallbackQuery, bot: Bot):
+    await bot.edit_message_reply_markup(
+        chat_id=callback.from_user.id,
+        message_id=callback.message.message_id,
+        reply_markup=None,
+    )
+    msg = await callback.message.answer(
+        text=GUESS_F,
+    )
+    await sleep(3)
+    await bot.delete_message(
+        chat_id=callback.from_user.id,
+        message_id=msg.message_id,
+    )
+    await callback.answer()
+
+
+@router.callback_query(StateFilter(GuessRandom.finish_next), F.data == "next")
+async def cmd_next_finish_next_state(
     callback: CallbackQuery, state: FSMContext, bot: Bot
 ):
     await bot.edit_message_reply_markup(
@@ -234,3 +410,17 @@ async def cmd_next_finish_or_next_state(
         reply_markup=tenses_kb.as_markup(),
     )
     await state.set_state(GuessRandom.guess_random)
+
+
+@router.message()
+async def delete_all_messages(message: Message, bot: Bot):
+    await message.delete()
+    msg = await bot.send_message(
+        chat_id=message.from_user.id,
+        text=UNKNOWN,
+    )
+    await sleep(2)
+    await bot.delete_message(
+        chat_id=message.from_user.id,
+        message_id=msg.message_id,
+    )

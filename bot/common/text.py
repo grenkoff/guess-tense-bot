@@ -16,6 +16,12 @@ Use the /guess command to start the game.
 
 GUESS = "Guess the tense 👇"
 
+GUESS_F = "❗ Guess the tense first."
+
+CHOOSE_FN = "❗ Choose Finish or Next first."
+
+CHOOSE_GUESS = "❗ Choose /guess command to start the game"
+
 FINISH = """
 The game is over 🏁
 See you later 🖐
@@ -29,4 +35,4 @@ This bot was created by me 🙋‍♂️
 There are my 🔗 links:
 """
 
-UNKNOWN = "Unknown command"
+UNKNOWN = "🤷‍♂️ Unknown command"
