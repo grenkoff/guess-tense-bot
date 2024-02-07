@@ -6,7 +6,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import BotCommandScopeAllPrivateChats
 
 from bot_instance import bot
-from handlers import common  # , guess_random
+from handlers import common # , guess_random
 from common.bot_cmds_list import private
 
 

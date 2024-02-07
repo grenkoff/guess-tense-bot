@@ -35,6 +35,8 @@ available_tenses = {
     "Fu Pe Co": "Future Perfect Continuous",
 }
 
+delay = 3
+
 
 @router.message(StateFilter(None), CommandStart())
 async def cmd_start_no_state(message: Message, bot: Bot):
@@ -53,7 +55,7 @@ async def cmd_start_guess_random_state(message: Message, bot: Bot):
         chat_id=message.from_user.id,
         text=GUESS_F,
     )
-    await sleep(2)
+    await sleep(delay)
     await bot.delete_message(
         chat_id=message.from_user.id,
         message_id=msg.message_id,
@@ -67,7 +69,7 @@ async def cmd_start_guess_random_state(message: Message, bot: Bot):
         chat_id=message.from_user.id,
         text=CHOOSE_FN,
     )
-    await sleep(2)
+    await sleep(delay)
     await bot.delete_message(
         chat_id=message.from_user.id,
         message_id=msg.message_id,
@@ -118,7 +120,7 @@ async def cmd_guess_no_state(message: Message, bot: Bot):
         chat_id=message.from_user.id,
         text=GUESS_F,
     )
-    await sleep(2)
+    await sleep(delay)
     await bot.delete_message(
         chat_id=message.from_user.id,
         message_id=msg.message_id,
@@ -132,7 +134,7 @@ async def cmd_guess_no_state(message: Message, bot: Bot):
         chat_id=message.from_user.id,
         text=CHOOSE_FN,
     )
-    await sleep(2)
+    await sleep(delay)
     await bot.delete_message(
         chat_id=message.from_user.id,
         message_id=msg.message_id,
@@ -149,7 +151,7 @@ async def tense_chosen_(callback: CallbackQuery, bot: Bot):
     msg = await callback.message.answer(
         text=CHOOSE_GUESS,
     )
-    await sleep(3)
+    await sleep(delay)
     await bot.delete_message(
         chat_id=callback.from_user.id,
         message_id=msg.message_id,
@@ -194,7 +196,7 @@ async def tense_chosen_(callback: CallbackQuery, bot: Bot):
     msg = await callback.message.answer(
         text=CHOOSE_FN,
     )
-    await sleep(3)
+    await sleep(delay)
     await bot.delete_message(
         chat_id=callback.from_user.id,
         message_id=msg.message_id,
@@ -214,7 +216,7 @@ async def cmd_finish_finish_or_next_state(
     msg = await callback.message.answer(
         text=CHOOSE_GUESS,
     )
-    await sleep(3)
+    await sleep(delay)
     await bot.delete_message(
         chat_id=callback.from_user.id,
         message_id=msg.message_id,
@@ -234,7 +236,7 @@ async def cmd_finish_finish_or_next_state(
     msg = await callback.message.answer(
         text=GUESS_F,
     )
-    await sleep(3)
+    await sleep(delay)
     await bot.delete_message(
         chat_id=callback.from_user.id,
         message_id=msg.message_id,
@@ -261,7 +263,7 @@ async def cmd_finish_finish_or_next_state(
         text=FINISH,
         reply_markup=finish_kb,
     )
-    await sleep(5)
+    await sleep(4)
     await bot.delete_message(
         chat_id=callback.from_user.id,
         message_id=sticker.message_id,
@@ -311,7 +313,7 @@ async def cmd_guess_callback_guess_random_state(
     msg = await callback.message.answer(
         text=GUESS_F,
     )
-    await sleep(3)
+    await sleep(delay)
     await bot.delete_message(
         chat_id=callback.from_user.id,
         message_id=msg.message_id,
@@ -332,7 +334,7 @@ async def cmd_guess_callback_finish_next_state(
     msg = await callback.message.answer(
         text=CHOOSE_FN,
     )
-    await sleep(3)
+    await sleep(delay)
     await bot.delete_message(
         chat_id=callback.from_user.id,
         message_id=msg.message_id,
@@ -364,7 +366,7 @@ async def cmd_next_guess_random_state(callback: CallbackQuery, bot: Bot):
     msg = await callback.message.answer(
         text=CHOOSE_GUESS,
     )
-    await sleep(3)
+    await sleep(delay)
     await bot.delete_message(
         chat_id=callback.from_user.id,
         message_id=msg.message_id,
@@ -382,7 +384,7 @@ async def cmd_next_guess_random_state(callback: CallbackQuery, bot: Bot):
     msg = await callback.message.answer(
         text=GUESS_F,
     )
-    await sleep(3)
+    await sleep(delay)
     await bot.delete_message(
         chat_id=callback.from_user.id,
         message_id=msg.message_id,
@@ -414,12 +416,14 @@ async def cmd_next_finish_next_state(
 
 @router.message()
 async def delete_all_messages(message: Message, bot: Bot):
-    await message.delete()
+    # await message.delete()
     msg = await bot.send_message(
         chat_id=message.from_user.id,
         text=UNKNOWN,
+        reply_to_message_id=message.message_id
     )
-    await sleep(2)
+    await sleep(delay)
+    await message.delete()
     await bot.delete_message(
         chat_id=message.from_user.id,
         message_id=msg.message_id,
