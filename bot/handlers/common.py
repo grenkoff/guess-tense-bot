@@ -1,3 +1,5 @@
+'''Module providing functions and callbacks handling corresponding commands.'''
+
 from random import choice
 from asyncio import sleep
 
@@ -17,6 +19,7 @@ from common.text import (
 )
 from common.stickers import sticker_ids
 
+DELETE_DELAY = 3
 
 router = Router()
 
@@ -35,11 +38,10 @@ available_tenses = {
     "Fu Pe Co": "Future Perfect Continuous",
 }
 
-delay = 3
-
 
 @router.message(StateFilter(None), CommandStart())
 async def cmd_start_no_state(message: Message, bot: Bot):
+    '''Function handling "start" command in no state.'''
     await message.delete()
     await bot.send_message(
         chat_id=message.from_user.id,
@@ -50,12 +52,13 @@ async def cmd_start_no_state(message: Message, bot: Bot):
 
 @router.message(StateFilter(GuessRandom.guess_random), CommandStart())
 async def cmd_start_guess_random_state(message: Message, bot: Bot):
+    '''Function handling "start" command in guess_random state.'''
     await message.delete()
     msg = await bot.send_message(
         chat_id=message.from_user.id,
         text=GUESS_F,
     )
-    await sleep(delay)
+    await sleep(DELETE_DELAY)
     await bot.delete_message(
         chat_id=message.from_user.id,
         message_id=msg.message_id,
@@ -63,13 +66,14 @@ async def cmd_start_guess_random_state(message: Message, bot: Bot):
 
 
 @router.message(StateFilter(GuessRandom.finish_next), CommandStart())
-async def cmd_start_guess_random_state(message: Message, bot: Bot):
+async def cmd_start_finish_next_state(message: Message, bot: Bot):
+    '''Function handling "start" command in finish_next state.'''
     await message.delete()
     msg = await bot.send_message(
         chat_id=message.from_user.id,
         text=CHOOSE_FN,
     )
-    await sleep(delay)
+    await sleep(DELETE_DELAY)
     await bot.delete_message(
         chat_id=message.from_user.id,
         message_id=msg.message_id,
@@ -77,13 +81,15 @@ async def cmd_start_guess_random_state(message: Message, bot: Bot):
 
 
 @router.message(Command("help"))
-async def cmd_help_no_state(message: Message, bot: Bot):
+async def cmd_help(message: Message, bot: Bot):
+    '''Function handling "help" command in all states.'''
     await message.delete()
     await bot.send_message(chat_id=message.from_user.id, text=HELP)
 
 
 @router.message(Command("author"))
-async def cmd_author_no_state(message: Message, bot: Bot):
+async def cmd_author(message: Message, bot: Bot):
+    '''Function handling "author" command in all states.'''
     await message.delete()
     await bot.send_message(
         chat_id=message.from_user.id,
@@ -94,6 +100,7 @@ async def cmd_author_no_state(message: Message, bot: Bot):
 
 @router.message(StateFilter(None), Command("guess"))
 async def cmd_guess_no_state(message: Message, state: FSMContext, bot: Bot):
+    '''Function handling "guess" command in no state.'''
     await message.delete()
     global random_sentence
     random_sentence = await get_random()
@@ -114,13 +121,14 @@ async def cmd_guess_no_state(message: Message, state: FSMContext, bot: Bot):
 
 
 @router.message(StateFilter(GuessRandom.guess_random), Command("guess"))
-async def cmd_guess_no_state(message: Message, bot: Bot):
+async def cmd_guess_guess_random_state(message: Message, bot: Bot):
+    '''Function handling "guess" command in guess_random state.'''
     await message.delete()
     msg = await bot.send_message(
         chat_id=message.from_user.id,
         text=GUESS_F,
     )
-    await sleep(delay)
+    await sleep(DELETE_DELAY)
     await bot.delete_message(
         chat_id=message.from_user.id,
         message_id=msg.message_id,
@@ -128,13 +136,14 @@ async def cmd_guess_no_state(message: Message, bot: Bot):
 
 
 @router.message(StateFilter(GuessRandom.finish_next), Command("guess"))
-async def cmd_guess_no_state(message: Message, bot: Bot):
+async def cmd_guess_finish_next_state(message: Message, bot: Bot):
+    '''Function handling "guess" command in finish_next state.'''
     await message.delete()
     msg = await bot.send_message(
         chat_id=message.from_user.id,
         text=CHOOSE_FN,
     )
-    await sleep(delay)
+    await sleep(DELETE_DELAY)
     await bot.delete_message(
         chat_id=message.from_user.id,
         message_id=msg.message_id,
@@ -142,7 +151,8 @@ async def cmd_guess_no_state(message: Message, bot: Bot):
 
 
 @router.callback_query(StateFilter(None), F.data.in_(available_tenses))
-async def tense_chosen_(callback: CallbackQuery, bot: Bot):
+async def callback_tenses_no_state(callback: CallbackQuery, bot: Bot):
+    '''Function handling tenses callback in no state.'''
     await bot.edit_message_reply_markup(
         chat_id=callback.from_user.id,
         message_id=callback.message.message_id,
@@ -151,7 +161,7 @@ async def tense_chosen_(callback: CallbackQuery, bot: Bot):
     msg = await callback.message.answer(
         text=CHOOSE_GUESS,
     )
-    await sleep(delay)
+    await sleep(DELETE_DELAY)
     await bot.delete_message(
         chat_id=callback.from_user.id,
         message_id=msg.message_id,
@@ -159,8 +169,13 @@ async def tense_chosen_(callback: CallbackQuery, bot: Bot):
     await callback.answer()
 
 
-@router.callback_query(StateFilter(GuessRandom.guess_random), F.data.in_(available_tenses))
-async def tense_chosen_(callback: CallbackQuery, state: FSMContext, bot: Bot):
+@router.callback_query(
+    StateFilter(GuessRandom.guess_random), F.data.in_(available_tenses)
+)
+async def callback_tenses_guess_random_state(
+    callback: CallbackQuery, state: FSMContext, bot: Bot
+):
+    '''Function handling tenses callback in guess_random state.'''
     await state.update_data(chosen_tense=callback.data.lower())
     await bot.edit_message_reply_markup(
         chat_id=callback.from_user.id,
@@ -186,8 +201,11 @@ async def tense_chosen_(callback: CallbackQuery, state: FSMContext, bot: Bot):
     await callback.answer()
 
 
-@router.callback_query(StateFilter(GuessRandom.finish_next), F.data.in_(available_tenses))
-async def tense_chosen_(callback: CallbackQuery, bot: Bot):
+@router.callback_query(
+    StateFilter(GuessRandom.finish_next), F.data.in_(available_tenses)
+)
+async def callback_tenses_finish_next_state(callback: CallbackQuery, bot: Bot):
+    '''Function handling tenses callback in finish_next state.'''
     await bot.edit_message_reply_markup(
         chat_id=callback.from_user.id,
         message_id=callback.message.message_id,
@@ -196,7 +214,7 @@ async def tense_chosen_(callback: CallbackQuery, bot: Bot):
     msg = await callback.message.answer(
         text=CHOOSE_FN,
     )
-    await sleep(delay)
+    await sleep(DELETE_DELAY)
     await bot.delete_message(
         chat_id=callback.from_user.id,
         message_id=msg.message_id,
@@ -205,9 +223,8 @@ async def tense_chosen_(callback: CallbackQuery, bot: Bot):
 
 
 @router.callback_query(StateFilter(None), F.data == "finish")
-async def cmd_finish_finish_or_next_state(
-    callback: CallbackQuery, bot: Bot
-):
+async def callback_finish_no_state(callback: CallbackQuery, bot: Bot):
+    '''Function handling "finish" callback in no state.'''
     await bot.edit_message_reply_markup(
         chat_id=callback.from_user.id,
         message_id=callback.message.message_id,
@@ -216,7 +233,7 @@ async def cmd_finish_finish_or_next_state(
     msg = await callback.message.answer(
         text=CHOOSE_GUESS,
     )
-    await sleep(delay)
+    await sleep(DELETE_DELAY)
     await bot.delete_message(
         chat_id=callback.from_user.id,
         message_id=msg.message_id,
@@ -224,10 +241,13 @@ async def cmd_finish_finish_or_next_state(
     await callback.answer()
 
 
-@router.callback_query(StateFilter(GuessRandom.guess_random), F.data == "finish")
-async def cmd_finish_finish_or_next_state(
+@router.callback_query(
+    StateFilter(GuessRandom.guess_random), F.data == "finish"
+)
+async def callback_finish_guess_random_state(
     callback: CallbackQuery, bot: Bot
 ):
+    '''Function handling "finish" callback in guess_random state.'''
     await bot.edit_message_reply_markup(
         chat_id=callback.from_user.id,
         message_id=callback.message.message_id,
@@ -236,7 +256,7 @@ async def cmd_finish_finish_or_next_state(
     msg = await callback.message.answer(
         text=GUESS_F,
     )
-    await sleep(delay)
+    await sleep(DELETE_DELAY)
     await bot.delete_message(
         chat_id=callback.from_user.id,
         message_id=msg.message_id,
@@ -244,10 +264,13 @@ async def cmd_finish_finish_or_next_state(
     await callback.answer()
 
 
-@router.callback_query(StateFilter(GuessRandom.finish_next), F.data == "finish")
-async def cmd_finish_finish_or_next_state(
+@router.callback_query(
+    StateFilter(GuessRandom.finish_next), F.data == "finish"
+)
+async def callback_finish_finish_next_state(
     callback: CallbackQuery, state: FSMContext, bot: Bot
 ):
+    '''Function handling "finish" callback in finish_next state.'''
     await state.clear()
     await bot.edit_message_reply_markup(
         chat_id=callback.from_user.id,
@@ -273,11 +296,10 @@ async def cmd_finish_finish_or_next_state(
 
 @router.callback_query(StateFilter(None), F.data == "guess")
 @router.callback_query(StateFilter(None), F.data == "guess_again")
-async def cmd_guess_callback_no_state(
-    callback: CallbackQuery,
-    state: FSMContext,
-    bot: Bot
+async def callback_guess_no_state(
+    callback: CallbackQuery, state: FSMContext, bot: Bot
 ):
+    '''Function handling "guess" and "guess_again" callbacks in no state.'''
     await bot.edit_message_reply_markup(
         chat_id=callback.from_user.id,
         message_id=callback.message.message_id,
@@ -300,11 +322,19 @@ async def cmd_guess_callback_no_state(
     await callback.answer()
 
 
-@router.callback_query(StateFilter(GuessRandom.guess_random), F.data == "guess")
-@router.callback_query(StateFilter(GuessRandom.guess_random), F.data == "guess_again")
-async def cmd_guess_callback_guess_random_state(
+@router.callback_query(
+    StateFilter(GuessRandom.guess_random), F.data == "guess"
+)
+@router.callback_query(
+    StateFilter(GuessRandom.guess_random), F.data == "guess_again"
+)
+async def callback_guess_guess_random_state(
     callback: CallbackQuery, bot: Bot
 ):
+    '''
+    Function handling "guess" and "guess_again"callbacks
+    in guess_random state.
+    '''
     await bot.edit_message_reply_markup(
         chat_id=callback.from_user.id,
         message_id=callback.message.message_id,
@@ -313,7 +343,7 @@ async def cmd_guess_callback_guess_random_state(
     msg = await callback.message.answer(
         text=GUESS_F,
     )
-    await sleep(delay)
+    await sleep(DELETE_DELAY)
     await bot.delete_message(
         chat_id=callback.from_user.id,
         message_id=msg.message_id,
@@ -321,11 +351,18 @@ async def cmd_guess_callback_guess_random_state(
     await callback.answer()
 
 
-@router.callback_query(StateFilter(GuessRandom.finish_next), F.data == "guess")
-@router.callback_query(StateFilter(GuessRandom.finish_next), F.data == "guess_again")
-async def cmd_guess_callback_finish_next_state(
+@router.callback_query(
+    StateFilter(GuessRandom.finish_next), F.data == "guess"
+)
+@router.callback_query(
+    StateFilter(GuessRandom.finish_next), F.data == "guess_again"
+)
+async def callback_guess_finish_next_state(
     callback: CallbackQuery, bot: Bot
 ):
+    '''
+    Function handling "guess" and "guess_again" callbacks in finish_next state.
+    '''
     await bot.edit_message_reply_markup(
         chat_id=callback.from_user.id,
         message_id=callback.message.message_id,
@@ -334,7 +371,7 @@ async def cmd_guess_callback_finish_next_state(
     msg = await callback.message.answer(
         text=CHOOSE_FN,
     )
-    await sleep(delay)
+    await sleep(DELETE_DELAY)
     await bot.delete_message(
         chat_id=callback.from_user.id,
         message_id=msg.message_id,
@@ -343,7 +380,8 @@ async def cmd_guess_callback_finish_next_state(
 
 
 @router.callback_query(F.data == "credits")
-async def cmd_credits_no_state(callback: CallbackQuery, bot: Bot):
+async def callback_credits(callback: CallbackQuery, bot: Bot):
+    '''Function handling "credits" callback in all states.'''
     await bot.edit_message_reply_markup(
         chat_id=callback.from_user.id,
         message_id=callback.message.message_id,
@@ -357,7 +395,8 @@ async def cmd_credits_no_state(callback: CallbackQuery, bot: Bot):
 
 
 @router.callback_query(StateFilter(None), F.data == "next")
-async def cmd_next_guess_random_state(callback: CallbackQuery, bot: Bot):
+async def callback_next_no_state(callback: CallbackQuery, bot: Bot):
+    '''Function handling "next" callback in no state.'''
     await bot.edit_message_reply_markup(
         chat_id=callback.from_user.id,
         message_id=callback.message.message_id,
@@ -366,7 +405,7 @@ async def cmd_next_guess_random_state(callback: CallbackQuery, bot: Bot):
     msg = await callback.message.answer(
         text=CHOOSE_GUESS,
     )
-    await sleep(delay)
+    await sleep(DELETE_DELAY)
     await bot.delete_message(
         chat_id=callback.from_user.id,
         message_id=msg.message_id,
@@ -375,7 +414,8 @@ async def cmd_next_guess_random_state(callback: CallbackQuery, bot: Bot):
 
 
 @router.callback_query(StateFilter(GuessRandom.guess_random), F.data == "next")
-async def cmd_next_guess_random_state(callback: CallbackQuery, bot: Bot):
+async def callback_next_guess_random_state(callback: CallbackQuery, bot: Bot):
+    '''Function handling "next" callback in guess_random state.'''
     await bot.edit_message_reply_markup(
         chat_id=callback.from_user.id,
         message_id=callback.message.message_id,
@@ -384,7 +424,7 @@ async def cmd_next_guess_random_state(callback: CallbackQuery, bot: Bot):
     msg = await callback.message.answer(
         text=GUESS_F,
     )
-    await sleep(delay)
+    await sleep(DELETE_DELAY)
     await bot.delete_message(
         chat_id=callback.from_user.id,
         message_id=msg.message_id,
@@ -393,9 +433,10 @@ async def cmd_next_guess_random_state(callback: CallbackQuery, bot: Bot):
 
 
 @router.callback_query(StateFilter(GuessRandom.finish_next), F.data == "next")
-async def cmd_next_finish_next_state(
+async def callback_next_finish_next_state(
     callback: CallbackQuery, state: FSMContext, bot: Bot
 ):
+    '''Function handling "next" callback in finish_next state.'''
     await bot.edit_message_reply_markup(
         chat_id=callback.from_user.id,
         message_id=callback.message.message_id,
@@ -415,14 +456,14 @@ async def cmd_next_finish_next_state(
 
 
 @router.message()
-async def delete_all_messages(message: Message, bot: Bot):
-    # await message.delete()
+async def delete_unknown_command(message: Message, bot: Bot):
+    '''Function deleting all unknown commands.'''
     msg = await bot.send_message(
         chat_id=message.from_user.id,
         text=UNKNOWN,
         reply_to_message_id=message.message_id
     )
-    await sleep(delay)
+    await sleep(DELETE_DELAY)
     await message.delete()
     await bot.delete_message(
         chat_id=message.from_user.id,
